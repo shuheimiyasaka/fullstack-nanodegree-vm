@@ -15,8 +15,8 @@ CREATE DATABASE tournament;
 CREATE TABLE players (
     player_id serial PRIMARY KEY,
     full_name text,
-    num_matches integer,
-    num_wins integer
+    num_matches integer DEFAULT 0,
+    num_wins integer DEFAULT 0
 );
 
 CREATE TABLE matches (
