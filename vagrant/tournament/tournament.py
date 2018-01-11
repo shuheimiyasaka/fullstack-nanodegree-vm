@@ -18,6 +18,9 @@ def deleteMatches():
     cur = conn.cursor()
     # Execute a command: this creates a new table
     cur.execute("DELETE FROM matches;")
+
+    cur.execute("UPDATE players "+
+                "SET num_wins = 0, num_matches = 0;")
     # Make the changes to the database persistent
     conn.commit()
     # Close communication with the database
@@ -90,6 +93,22 @@ def playerStandings():
         wins: the number of matches the player has won
         matches: the number of matches the player has played
     """
+    conn = connect()
+    # Open a cursor to perform database operations
+    cur = conn.cursor()
+    # Execute a command: this creates a new table
+    cur.execute("SELECT player_id, full_name, num_wins, num_matches "+
+        "FROM players "+
+        "order by num_wins desc, full_name;")
+    res = cur.fetchall()
+    
+    # Make the changes to the database persistent
+    conn.commit()
+    # Close communication with the database
+    cur.close()
+    conn.close()
+
+    return res
 
 
 def reportMatch(winner, loser):
@@ -99,8 +118,31 @@ def reportMatch(winner, loser):
       winner:  the id number of the player who won
       loser:  the id number of the player who lost
     """
- 
- 
+    conn = connect()
+    # Open a cursor to perform database operations
+    cur = conn.cursor()
+    # Execute a command: this creates a new table
+    cur.execute("INSERT INTO matches (winner_id, loser_id) "+
+                "VALUES (%s, %s);", 
+                (bleach.clean(str(winner)), bleach.clean(str(loser))))
+    
+    cur.execute("UPDATE players "+
+                "SET num_matches = num_matches + 1 " + 
+                "WHERE player_id = %s or " +
+                "      player_id = %s;", 
+                (bleach.clean(str(winner)), bleach.clean(str(loser))))
+
+    cur.execute("UPDATE players "+
+                "SET num_wins = num_wins + 1 " +
+                "WHERE player_id = %s;", (bleach.clean(str(winner)),))
+
+    # Make the changes to the database persistent
+    conn.commit()
+    # Close communication with the database
+    cur.close()
+    conn.close()
+
+
 def swissPairings():
     """Returns a list of pairs of players for the next round of a match.
   
